@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Email History{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-history me-2"></i>Sent Emails</span>
+    </div>
+    <div class="card-body">
+        {% if emails %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sender</th>
+                            <th>Recipient</th>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for email in emails %}
+                            <tr>
+                                <td>{{ email.sender_email }}</td>
+                                <td>{{ email.recipient_email }}</td>
+                                <td>{{ email.subject }}</td>
+                                <td>{{ email.sent_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if email.success %}
+                                        <span class="badge bg-success">Success</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary view-email" data-id="{{ email.id }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-envelope fa-3x mb-3"></i>
+                <p>No emails have been sent yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Email Preview Modal -->
+<div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Email Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>From:</strong> <span id="preview-sender"></span></p>
+                            <p><strong>To:</strong> <span id="preview-recipient"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Date:</strong> <span id="preview-date"></span></p>
+                            <p><strong>Status:</strong> <span id="preview-status"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Subject</label>
+                    <input type="text" class="form-control" id="preview-subject" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Body</label>
+                    <div class="card">
+                        <div class="card-body" id="preview-body"></div>
+                    </div>
+                </div>
+                <div id="error-message-container" style="display: none;">
+                    <label class="form-label text-danger">Error Message</label>
+                    <div class="alert alert-danger" id="preview-error"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="resend-email">Resend</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // View email details
+        $('.view-email').click(function() {
+            const emailId = $(this).data('id');
+
+            // In a real application, you would fetch the email details from the server
+            // For this example, we'll use the data from the table row
+            const row = $(this).closest('tr');
+            const sender = row.find('td:eq(0)').text();
+            const recipient = row.find('td:eq(1)').text();
+            const subject = row.find('td:eq(2)').text();
+            const date = row.find('td:eq(3)').text();
+            const success = row.find('.badge').hasClass('bg-success');
+
+            // Populate modal
+            $('#preview-sender').text(sender);
+            $('#preview-recipient').text(recipient);
+            $('#preview-subject').val(subject);
+            $('#preview-date').text(date);
+
+            if (success) {
+                $('#preview-status').html('<span class="badge bg-success">Success</span>');
+                $('#error-message-container').hide();
+            } else {
+                $('#preview-status').html('<span class="badge bg-danger">Failed</span>');
+                $('#preview-error').text('Error details would be shown here in a real application.');
+                $('#error-message-container').show();
+            }
+
+            // For a real application, you would fetch the email body from the server
+            $('#preview-body').html('<p>Email body would be displayed here in a real application.</p>');
+
+            // Show modal
+            const emailModal = new bootstrap.Modal(document.getElementById('emailModal'));
+            emailModal.show();
+        });
+
+        // Resend email
+        $('#resend-email').click(function() {
+            alert('In a real application, this would resend the email.');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Email Spoofing Tool</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --dark-color: #5a5c69;
+            --light-color: #f8f9fc;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--light-color);
+        }
+
+        .navbar {
+            background-color: white;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 10%, #224abe 100%);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 1rem;
+            margin-bottom: 0.2rem;
+            border-radius: 0.35rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 0.5rem;
+        }
+
+        .content {
+            padding: 1.5rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 0.75rem 1.25rem;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-success {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .alert-success {
+            background-color: #eafaf1;
+            border-color: var(--secondary-color);
+            color: #1a7a52;
+        }
+
+        .alert-danger {
+            background-color: #fdedeb;
+            border-color: var(--danger-color);
+            color: #a93226;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+        }
+
+        /* Custom components */
+        .stat-card {
+            border-left: 0.25rem solid;
+            border-radius: 0.35rem;
+        }
+
+        .stat-card-primary {
+            border-left-color: var(--primary-color);
+        }
+
+        .stat-card-success {
+            border-left-color: var(--secondary-color);
+        }
+
+        .stat-card-warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .stat-card-danger {
+            border-left-color: var(--danger-color);
+        }
+
+        .stat-card .stat-icon {
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white">AI Email Spoofing</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('index') }}">
+                                <i class="fas fa-envelope"></i> Compose Email
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/templates' %}active{% endif %}" href="{{ url_for('templates') }}">
+                                <i class="fas fa-file-alt"></i> Templates
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/history' %}active{% endif %}" href="{{ url_for('history') }}">
+                                <i class="fas fa-history"></i> History
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                                <i class="fas fa-chart-line"></i> Dashboard
+                            </a>
+                        </li>
+                    </ul>
+
+                    <hr class="text-white-50">
+
+                    <div class="px-3 mt-4 mb-4 text-white-50">
+                        <small>
+                            <p><i class="fas fa-exclamation-triangle me-2"></i> Educational purposes only</p>
+                            <p>This tool is designed for educational and testing purposes. Always ensure you have permission to test email systems.</p>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <nav class="navbar navbar-expand-lg navbar-light bg-white mb-4">
+                    <div class="container-fluid">
+                        <button class="navbar-toggler d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target=".sidebar">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <span class="navbar-brand mb-0 h1">{% block page_title %}{% endblock %}</span>
+                        <div class="d-flex">
+                            <span class="navbar-text">
+                                <i class="fas fa-robot me-1"></i> AI-Powered
+                            </span>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="content">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Main Content -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

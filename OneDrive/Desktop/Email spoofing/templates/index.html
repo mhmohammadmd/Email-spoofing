@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Spoofing Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .ai-suggestions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 15px;
+            margin: 10px 0;
+            display: none;
+        }
+        .loading {
+            display: none;
+            margin: 10px 0;
+        }
+        .suggestion-item {
+            padding: 5px 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .suggestion-item:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">Email Spoofing Tool</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/templates">Templates</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/history">History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Compose Email</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="emailForm">
+            {{ form.hidden_tag() }}
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.sender_name.label(class="form-label") }}
+                        {{ form.sender_name(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.sender_email.label(class="form-label") }}
+                        {{ form.sender_email(class="form-control") }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        {{ form.recipient_email.label(class="form-label") }}
+                        {{ form.recipient_email(class="form-control") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.template.label(class="form-label") }}
+                        {{ form.template(class="form-control") }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.subject.label(class="form-label") }}
+                <div class="input-group">
+                    {{ form.subject(class="form-control") }}
+                    <button type="button" class="btn btn-outline-primary" id="suggestSubject">
+                        <i class="bi bi-lightbulb"></i> AI Suggest
+                    </button>
+                </div>
+                <div id="subjectSuggestions" class="ai-suggestions">
+                    <h5>AI Subject Suggestions</h5>
+                    <div id="subjectSuggestionsList"></div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.body.label(class="form-label") }}
+                {{ form.body(class="form-control", rows="10") }}
+                <div class="mt-2">
+                    <button type="button" class="btn btn-outline-primary" id="analyzeContent">
+                        <i class="bi bi-graph-up"></i> AI Analysis
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="improveContent">
+                        <i class="bi bi-magic"></i> AI Improve
+                    </button>
+                </div>
+                <div id="contentAnalysis" class="ai-suggestions">
+                    <h5>AI Content Analysis</h5>
+                    <div id="analysisResults"></div>
+                </div>
+                <div id="contentSuggestions" class="ai-suggestions">
+                    <h5>AI Improvement Suggestions</h5>
+                    <div id="suggestionsList"></div>
+                </div>
+                <div class="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="ms-2">Getting AI suggestions...</span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('suggestSubject').addEventListener('click', async () => {
+            const content = document.getElementById('body').value;
+            if (!content) {
+                alert('Please write some email content first');
+                return;
+            }
+
+            const loading = document.querySelector('.loading');
+            const suggestionsDiv = document.getElementById('subjectSuggestions');
+            loading.style.display = 'block';
+            suggestionsDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+                const data = await response.json();
+
+                const suggestionsList = document.getElementById('subjectSuggestionsList');
+                suggestionsList.innerHTML = '';
+
+                data.subject_suggestions.forEach(suggestion => {
+                    if (suggestion.trim()) {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+                        div.textContent = suggestion;
+                        div.onclick = () => {
+                            document.getElementById('subject').value = suggestion;
+                        };
+                        suggestionsList.appendChild(div);
+                    }
+                });
+
+                suggestionsDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting suggestions');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        document.getElementById('analyzeContent').addEventListener('click', async () => {
+            const content = document.getElementById('body').value;
+            if (!content) {
+                alert('Please write some email content first');
+                return;
+            }
+
+            const loading = document.querySelector('.loading');
+            const analysisDiv = document.getElementById('contentAnalysis');
+            loading.style.display = 'block';
+            analysisDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+                const data = await response.json();
+
+                const analysisResults = document.getElementById('analysisResults');
+                analysisResults.innerHTML = `
+                    <p><strong>Word Count:</strong> ${data.content_analysis.word_count}</p>
+                    <p><strong>Average Word Length:</strong> ${data.content_analysis.avg_word_length}</p>
+                    <p><strong>AI Analysis:</strong></p>
+                    <div class="mt-2">${data.content_analysis.gpt_analysis.split('\n').map(line =>
+                        `<p>${line}</p>`).join('')}</div>
+                    ${data.phishing_check.is_potential_phishing ?
+                        `<div class="alert alert-warning">
+                            <strong>Phishing Warning:</strong> This email contains potential phishing patterns.
+                            <br>Risk Score: ${data.phishing_check.risk_score}%
+                        </div>` : ''}
+                `;
+
+                analysisDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error analyzing content');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        document.getElementById('improveContent').addEventListener('click', async () => {
+            const content = document.getElementById('body').value;
+            if (!content) {
+                alert('Please write some email content first');
+                return;
+            }
+
+            const loading = document.querySelector('.loading');
+            const suggestionsDiv = document.getElementById('contentSuggestions');
+            loading.style.display = 'block';
+            suggestionsDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+                const data = await response.json();
+
+                const suggestionsList = document.getElementById('suggestionsList');
+                suggestionsList.innerHTML = data.content_analysis.recommendations
+                    .filter(rec => rec.trim())
+                    .map(rec => `<div class="suggestion-item">${rec}</div>`)
+                    .join('');
+
+                suggestionsDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error getting suggestions');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        // Template handling
+        document.getElementById('template').addEventListener('change', async (e) => {
+            const templateId = e.target.value;
+            if (templateId !== '0') {
+                try {
+                    const response = await fetch(`/template/${templateId}`);
+                    const data = await response.json();
+                    document.getElementById('subject').value = data.subject;
+                    document.getElementById('body').value = data.body;
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error loading template');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
